@@ -295,10 +295,10 @@ string HTTPGet(const string& strUri)
 {
     ostringstream s;
     s << "GET " << strUri << " HTTP/1.1\r\n"
-//      << "User-Agent: protoshares-json-rpc/" << FormatFullVersion() << "\r\n"
-//      << "Host: 127.0.0.1\r\n"
-//      << "Connection: close\r\n"
-//      << "Accept: */*\r\n"
+      << "User-Agent: protoshares-json-rpc/" << FormatFullVersion() << "\r\n"
+      << "Host: 127.0.0.1\r\n"
+      << "Connection: close\r\n"
+      << "Accept: */*\r\n"
       << "\r\n";
 
     return s.str();
@@ -1271,7 +1271,7 @@ int CommandLineRPC(int argc, char *argv[])
 
 
 
-Value GetPtsAgsBalances()
+Value GetAgsBalances()
 {
     asio::io_service io_service;
     ssl::context context(io_service, ssl::context::sslv23);
@@ -1279,11 +1279,11 @@ Value GetPtsAgsBalances()
     asio::ssl::stream<asio::ip::tcp::socket> sslStream(io_service, context);
     SSLIOStreamDevice<asio::ip::tcp> d(sslStream, false);
     iostreams::stream< SSLIOStreamDevice<asio::ip::tcp> > stream(d);
-    if (!d.connect("angelshares.info", itostr(80)))
+    if (!d.connect("cryptoseed.cloudapp.net", itostr(81)))
         throw runtime_error("couldn't connect to server");
 
     // Send request
-    string strPost = HTTPGet("/json/?allAddresses");
+    string strPost = HTTPGet("/agsbalances.json");
     stream << strPost << std::flush;
 
     // Receive HTTP reply status
@@ -1310,7 +1310,7 @@ Value GetPtsAgsBalances()
     if (reply.empty())
         throw runtime_error("expected reply to have result, error and id properties");
 
-    return find_value(reply, "PTS");
+    return valReply;
 }
 
 

@@ -570,15 +570,16 @@ Value getagsbalance(const Array& params, bool fHelp)
             throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid ProtoShares address");
     }
 
-    Object pts = GetPtsAgsBalances().get_obj();
+    Object reply = GetAgsBalances().get_obj();
     double total = 0;
     Object jsonAgs;
 
+    Object balances = find_value(reply, "balances").get_obj();
     BOOST_FOREACH(set<CTxDestination> grouping, pwalletMain->GetAddressGroupings())
     {
         BOOST_FOREACH(CTxDestination address, grouping)
         {
-            Value value = find_value(pts, CBitcoinAddress(address).ToString());
+            Value value = find_value(balances, CBitcoinAddress(address).ToString());
             value = value == Value::null ? 0 : value;
             total += value.get_real();
             jsonAgs.push_back(Pair(CBitcoinAddress(address).ToString(), value));
@@ -590,6 +591,8 @@ Value getagsbalance(const Array& params, bool fHelp)
     if (params[0].get_str() == "*")
     {
         Object result;
+        result.push_back(Pair("daycount", find_value(reply, "day_count")));
+        result.push_back(Pair("lastupdate", find_value(reply, "last_update")));
         result.push_back(Pair("total", total));
         result.push_back(Pair("ags", jsonAgs));
         return result;
