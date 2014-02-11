@@ -55,9 +55,9 @@ unsigned int nCoinCacheSize = 5000;
 int DIFFICULTYADJUSTMENTBLOCKHEIGHTFORK = 12000; //first difference should kick in at 2016*6
 
 /** Fees smaller than this (in satoshi) are considered zero fee (for transaction creation) */
-int64 CTransaction::nMinTxFee = 1000000;  // Override with -mintxfee
+int64 CTransaction::nMinTxFee = MIN_TX_FEE;  // Override with -mintxfee
 /** Fees smaller than this (in satoshi) are considered zero fee (for relaying) */
-int64 CTransaction::nMinRelayTxFee = 1000000;
+int64 CTransaction::nMinRelayTxFee = MIN_TX_FEE;
 
 CMedianFilter<int> cPeerBlockCounts(8, 0); // Amount of blocks that other nodes claim to have
 
@@ -77,7 +77,7 @@ int64 nHPSTimerStart = 0;
 int nThreads =0;
 
 // Settings
-int64 nTransactionFee = 0.01*COIN;
+int64 nTransactionFee = 0;
 
 
 
