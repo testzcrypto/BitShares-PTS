@@ -46,21 +46,21 @@ include_directories(${BDB_INCLUDE}
                     "leveldb/include"
                     "leveldb/helpers"
                     )
-add_library(protoshares ${DAEMON_SOURCES})
-target_link_libraries(protoshares leveldb
+add_library(bitshares-pts ${DAEMON_SOURCES})
+target_link_libraries(bitshares-pts leveldb
 		${CMAKE_THREAD_LIBS_INIT}
 		${BDB_LIBRARY}
 		${Boost_LIBRARIES}
 		${OPENSSL_LIBRARIES}
 		)
-add_executable(protosharesd main.cpp)
-target_link_libraries(protosharesd protoshares)
+add_executable(bitshares-ptsd main.cpp)
+target_link_libraries(bitshares-ptsd bitshares-pts)
 
 if(BUILD_QT)
     	add_subdirectory( qt )
 else(BUILD_QT)
-	add_executable(protosharesd main.cpp)
-	target_link_libraries(protosharesd protoshares)
+	add_executable(bitshares-ptsd main.cpp)
+	target_link_libraries(bitshares-ptsd bitshares-pts)
 endif(BUILD_QT)
 
 #add_subdirectory(test)

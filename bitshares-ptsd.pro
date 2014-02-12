@@ -1,7 +1,7 @@
 TEMPLATE = app
-TARGET = protosharesd
-#macx:TARGET = "ProtoShares-Qt"
-VERSION = 0.8.5
+TARGET = bitshares-ptsd
+#macx:TARGET = "BitShares-PTS-Qt"
+VERSION = 1.0.0
 INCLUDEPATH += src src/json 
 QT += network 
 DEFINES += BOOST_THREAD_USE_LIB BOOST_SPIRIT_THREADSAFE

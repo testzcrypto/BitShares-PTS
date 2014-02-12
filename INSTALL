@@ -1,9 +1,9 @@
-Building ProtoShares
+Building BitShares PTS
 
-See doc/readme-qt.rst for instructions on building ProtoShares-Qt,
+See doc/readme-qt.rst for instructions on building BitShares PTS-Qt,
 the intended-for-end-users, nice-graphical-interface, reference
-implementation of ProtoShares.
+implementation of BitShares PTS.
 
-See doc/build-*.txt for instructions on building bitcoind,
+See doc/build-*.txt for instructions on building daemon,
 the intended-for-services, no-graphical-interface, reference
-implementation of ProtoShares.
+implementation of BitShares PTS.
