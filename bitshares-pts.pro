@@ -119,7 +119,8 @@ QMAKE_EXTRA_TARGETS += genleveldb
 QMAKE_CLEAN += src/leveldb/libleveldb.a; cd $$PWD/src/leveldb ; $(MAKE) clean
 
 # regenerate src/build.h
-!win32|contains(USE_BUILD_INFO, 1) {
+!win32:contains(USE_BUILD_INFO, 1) {
+    message(Building with build info)
     genbuild.depends = FORCE
     genbuild.commands = cd $$PWD; /bin/sh share/genbuild.sh $$OUT_PWD/build/build.h
     genbuild.target = $$OUT_PWD/build/build.h
