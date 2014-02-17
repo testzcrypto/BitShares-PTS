@@ -34,7 +34,7 @@ unsigned int nTransactionsUpdated = 0;
 
 map<uint256, CBlockIndex*> mapBlockIndex;
 
-uint256 hashGenesisBlock("0x000fdcd47b7e75a46a2aded5f3335c90eb2224e01ab19ec64ffdd1b437d7b8c0");
+uint256 hashGenesisBlock = hashGenesisBlockOfficial;
 uint256 merkleRootGenesisBlock("0x6fa9be1606341d6ea673de9a0f0091d30bccc9203d48380e9005d8d772f2eb6f");
 static CBigNum bnProofOfWorkLimit(~uint256(0) >> 9);
 CBlockIndex* pindexGenesisBlock = NULL;
@@ -55,9 +55,9 @@ unsigned int nCoinCacheSize = 5000;
 int DIFFICULTYADJUSTMENTBLOCKHEIGHTFORK = 12000; //first difference should kick in at 2016*6
 
 /** Fees smaller than this (in satoshi) are considered zero fee (for transaction creation) */
-int64 CTransaction::nMinTxFee = 1000000;  // Override with -mintxfee
+int64 CTransaction::nMinTxFee = MIN_TX_FEE;  // Override with -mintxfee
 /** Fees smaller than this (in satoshi) are considered zero fee (for relaying) */
-int64 CTransaction::nMinRelayTxFee = 1000000;
+int64 CTransaction::nMinRelayTxFee = MIN_TX_FEE;
 
 CMedianFilter<int> cPeerBlockCounts(8, 0); // Amount of blocks that other nodes claim to have
 
@@ -70,14 +70,14 @@ map<uint256, set<uint256> > mapOrphanTransactionsByPrev;
 // Constant stuff for coinbase transactions we create:
 CScript COINBASE_FLAGS;
 
-const string strMessageMagic = "ProtoShares Signed Message:\n";
+const string strMessageMagic = "BitShares-PTS Signed Message:\n";
 
 double dHashesPerSec = 0.0;
 int64 nHPSTimerStart = 0;
 int nThreads =0;
 
 // Settings
-int64 nTransactionFee = 0.01*COIN;
+int64 nTransactionFee = 0;
 
 
 
@@ -1648,7 +1648,7 @@ bool FindUndoPos(CValidationState &state, int nFile, CDiskBlockPos &pos, unsigne
 static CCheckQueue<CScriptCheck> scriptcheckqueue(128);
 
 void ThreadScriptCheck() {
-    RenameThread("bitcoin-scriptch");
+    RenameThread("bitshares-pts-scriptch");
     scriptcheckqueue.Thread();
 }
 
@@ -2776,11 +2776,11 @@ bool LoadBlockIndex()
 {
     if (fTestNet)
     {
-        pchMessageStart[0] = 0x0b;
-        pchMessageStart[1] = 0x11;
-        pchMessageStart[2] = 0x09;
-        pchMessageStart[3] = 0x07;
-        hashGenesisBlock = uint256("000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943");
+        pchMessageStart[0] = 0xf8;
+        pchMessageStart[1] = 0xba;
+        pchMessageStart[2] = 0xb5;
+        pchMessageStart[3] = 0xd8;
+        hashGenesisBlock = hashGenesisBlockTestNet;
     }
 
     //
@@ -2840,8 +2840,11 @@ bool InitBlockIndex() {
 
         if (fTestNet)
         {
-            block.nTime    = 1296688602;
-            block.nNonce   = 414098458;
+            block.nTime      = 1389514088;
+            block.nBits      = 0x20000FFF;
+            block.nNonce     = 2921;
+            block.nBirthdayA = 11513970;
+            block.nBirthdayB = 13104368;
         }
 
         //// debug print
@@ -2851,7 +2854,38 @@ bool InitBlockIndex() {
         printf("MROOT: %s\n", block.hashMerkleRoot.ToString().c_str());
         block.print();
 
-
+        // If genesis block hash does not match, then generate new genesis hash.
+        if (false && block.GetHash() != hashGenesisBlock)
+        {
+            printf("Searching for genesis block...\n");
+            // This will figure out a valid hash and Nonce if you're
+            // creating a different genesis block:
+            uint256 hashTarget = CBigNum().SetCompact(block.nBits).getuint256();
+            uint256 thash;
+            block.nNonce = 0;
+    
+            while(true)
+            {
+                int collisions=0;
+                thash = block.CalculateBestBirthdayHash(collisions);
+                if (thash <= hashTarget)
+                    break;
+                printf("nonce %08X: hash = %s (target = %s)\n", block.nNonce, thash.ToString().c_str(),
+                    hashTarget.ToString().c_str());
+                ++block.nNonce;
+                if (block.nNonce == 0)
+                {
+                    printf("NONCE WRAPPED, incrementing time\n");
+                    ++block.nTime;
+                }
+            }
+            printf("block.nTime = %u \n", block.nTime);
+            printf("block.nNonce = %u \n", block.nNonce);
+            printf("block.GetHash = %s\n", block.GetHash().ToString().c_str());
+            printf("block.nBits = %u \n", block.nBits);
+            printf("block.nBirthdayA = %u \n", block.nBirthdayA);
+            printf("block.nBirthdayB = %u \n", block.nBirthdayB);
+        }
 
 	  //halt program if genesis block not valid
         assert(block.hashMerkleRoot == merkleRootGenesisBlock);
@@ -4534,7 +4568,7 @@ bool CheckWork(CBlock* pblock, CWallet& wallet, CReserveKey& reservekey)
     fprintf( stderr, "hash %s < %s\n", hash.ToString().c_str(), hashTarget.ToString().c_str() );
 
     //// debug print
-    printf("ProtoSharesMiner:\n");
+    printf("BitSharesPTSMiner:\n");
     printf("proof-of-work found  \n  hash: %s  \ntarget: %s\n", hash.GetHex().c_str(), hashTarget.GetHex().c_str());
     pblock->print();
     printf("generated %s\n", FormatMoney(pblock->vtx[0].vout[0].nValue).c_str());
@@ -4543,7 +4577,7 @@ bool CheckWork(CBlock* pblock, CWallet& wallet, CReserveKey& reservekey)
     {
         LOCK(cs_main);
         if (pblock->hashPrevBlock != hashBestChain)
-            return error("ProtoSharesMiner : generated block is stale");
+            return error("BitSharesPTSMiner : generated block is stale");
 
         // Remove key from key pool
         reservekey.KeepKey();
@@ -4557,7 +4591,7 @@ bool CheckWork(CBlock* pblock, CWallet& wallet, CReserveKey& reservekey)
         // Process this block the same as if we had received it from another node
         CValidationState state;
         if (!ProcessBlock(state, NULL, pblock))
-            return error("ProtoSharesMiner : ProcessBlock, block not accepted");
+            return error("BitSharesPTSMiner : ProcessBlock, block not accepted");
     }
 
     return true;
@@ -4565,9 +4599,9 @@ bool CheckWork(CBlock* pblock, CWallet& wallet, CReserveKey& reservekey)
 
 void static BitcoinMiner(CWallet *pwallet)
 {
-    printf("ProtoSharesMiner started\n");
+    printf("BitSharesPTSMiner started\n");
     SetThreadPriority(THREAD_PRIORITY_LOWEST);
-    RenameThread("bitcoin-miner");
+    RenameThread("bitshares-pts-miner");
 
     // Each thread has its own key and counter
     CReserveKey reservekey(pwallet);
@@ -4589,7 +4623,7 @@ void static BitcoinMiner(CWallet *pwallet)
         CBlock *pblock = &pblocktemplate->block;
         IncrementExtraNonce(pblock, pindexPrev, nExtraNonce);
 
-        printf("Running ProtoSharesMiner with %"PRIszu" transactions in block (%u bytes)\n", pblock->vtx.size(),
+        printf("Running BitSharesPTSMiner with %"PRIszu" transactions in block (%u bytes)\n", pblock->vtx.size(),
                ::GetSerializeSize(*pblock, SER_NETWORK, PROTOCOL_VERSION));
 
         //
@@ -4713,7 +4747,7 @@ void static BitcoinMiner(CWallet *pwallet)
     } }
     catch (boost::thread_interrupted)
     {
-        printf("ProtoSharesMiner terminated\n");
+        printf("BitSharesPTSMiner terminated\n");
         throw;
     }
 }
