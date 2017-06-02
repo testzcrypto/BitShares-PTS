@@ -652,6 +652,29 @@ bool AppInit2(boost::thread_group& threadGroup)
 
     // ********************************************************* Step 5: verify wallet database integrity
 
+    if (filesystem::exists(GetProtoSharesDataDir() / "wallet.dat") &&
+        !filesystem::exists(GetDataDir() / "wallet.dat"))
+    {
+        bool fRet = uiInterface.ThreadSafeMessageBox(
+            _("BitShares-PTS wallet file doesn't exists but ProtoShares wallet was detected.\n") +
+            _("Do you want to load ProtoShares wallet?"),
+            "", CClientUIInterface::MSG_INFORMATION | CClientUIInterface::MODAL | 
+            CClientUIInterface::BTN_OK | CClientUIInterface::BTN_NO);
+        if (fRet) {
+            printf("Copying wallet.dat from ProtoShares... ");
+            filesystem::path pathSrc = GetProtoSharesDataDir() / "wallet.dat";
+            filesystem::path pathDest = GetDataDir() / "wallet.dat";
+            try {
+                    filesystem::copy_file(pathSrc, pathDest);
+                    printf("copied from %s to %s\n", pathSrc.string().c_str(),
+                        pathDest.string().c_str());
+            } catch(const filesystem::filesystem_error &e) {
+                    printf("error copying from %s to %s - %s\n", pathSrc.string().c_str(),
+                        pathDest.string().c_str(), e.what());
+            }
+        }
+    }
+
     uiInterface.InitMessage(_("Verifying wallet..."));
 
     if (!bitdb.Open(GetDataDir()))

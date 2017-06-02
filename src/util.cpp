@@ -1014,6 +1014,46 @@ void PrintExceptionContinue(std::exception* pex, const char* pszThread)
     strMiscWarning = message;
 }
 
+boost::filesystem::path GetDefaultProtoSharesDataDir()
+{
+    namespace fs = boost::filesystem;
+    // Windows < Vista: C:\Documents and Settings\Username\Application Data\Bitcoin
+    // Windows >= Vista: C:\Users\Username\AppData\Roaming\Bitcoin
+    // Mac: ~/Library/Application Support/Bitcoin
+    // Unix: ~/.bitcoin
+#ifdef WIN32
+    // Windows
+    return GetSpecialFolderPath(CSIDL_APPDATA) / "ProtoShares";
+#else
+    fs::path pathRet;
+    char* pszHome = getenv("HOME");
+    if (pszHome == NULL || strlen(pszHome) == 0)
+        pathRet = fs::path("/");
+    else
+        pathRet = fs::path(pszHome);
+#ifdef MAC_OSX
+    // Mac
+    pathRet /= "Library/Application Support";
+    fs::create_directory(pathRet);
+    return pathRet / "ProtoShares";
+#else
+    // Unix
+    return pathRet / ".protoshares";
+#endif
+#endif
+}
+
+const boost::filesystem::path &GetProtoSharesDataDir(bool fNetSpecific)
+{
+    namespace fs = boost::filesystem;
+    static fs::path path = GetDefaultProtoSharesDataDir();
+
+    if (fNetSpecific && GetBoolArg("-testnet", false))
+        path /= "testnet3";
+
+    return path;
+}
+
 boost::filesystem::path GetDefaultDataDir()
 {
     namespace fs = boost::filesystem;
